@@ -96,34 +96,19 @@ export class WishesService {
   async copy(wishId: number, user: User) {
     const originalWish = await this.findOne(wishId);
 
-    if (originalWish.owner.id === user.id) {
-      throw new BadRequestException(WishErrors.OwnWishCopy);
-    }
-
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      const {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        id,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        createdAt,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        updatedAt,
-        copied,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        owner,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        offers,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        raised,
-        ...wishData
-      } = await this.findOne(wishId);
-      await this.wishRepository.update(wishId, { copied: copied + 1 });
-
-      const newWish = await this.create(wishData, user);
+      await this.wishRepository.update(wishId, {
+        copied: originalWish.copied + 1,
+      });
+      const { name, link, image, price, description } = originalWish;
+      const newWish = await this.create(
+        { name, link, image, price, description },
+        user,
+      );
 
       const savedWish = await this.findOne(newWish.id);
 
